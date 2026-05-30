@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>open your window</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- Helvetica Neue renders natively on macOS (the poster's typeface); Inter is the cross-platform fallback -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* focus-window rectangle, as % insets of the poster — drives clip-path AND the frame */
+    --win-top: 36%;
+    --win-right: 33%;
+    --win-bottom: 22%;
+    --win-left: 46%;
+    --paper: #b9b7b4;
+    --ink: #1b1b1b;
+  }
+  *{ margin:0; padding:0; box-sizing:border-box; }
+  html,body{ height:100%; }
+  body{
+    background:#7c7a77;
+    background:
+      radial-gradient(120% 90% at 50% 0%, #908e8b 0%, #6f6d6a 55%, #565452 100%);
+    font-family:"Helvetica Neue","Inter",Helvetica,Arial,sans-serif;
+    color:var(--ink);
+    display:grid; place-items:center;
+    min-height:100svh;
+    padding:clamp(16px,4vmin,48px);
+    overflow:hidden;
+  }
+
+  /* ---- poster ---- */
+  .poster{
+    position:relative;
+    width:min(92vmin,calc((100svh - 6vmin) * 0.667));
+    aspect-ratio:1024/1536;
+    background:var(--paper);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,.25) inset,
+      0 40px 80px -30px rgba(0,0,0,.65),
+      0 8px 24px -12px rgba(0,0,0,.5);
+    overflow:hidden;
+    isolation:isolate;
+    cursor:crosshair;
+  }
+
+  /* the two stacked photographs */
+  .layer{
+    position:absolute; inset:0;
+    width:100%; height:100%;
+    object-fit:cover; object-position:50% 50%;
+    filter:grayscale(1);
+    z-index:1;
+  }
+  .layer.blur{
+    filter:grayscale(1) blur(15px) brightness(1.05) contrast(.95);
+    transform:scale(1.08);
+  }
+  .layer.sharp{
+    filter:grayscale(1) contrast(1.08) brightness(1.02);
+    clip-path:inset(var(--win-top) var(--win-right) var(--win-bottom) var(--win-left));
+    transition:clip-path .16s ease-out;
+    z-index:2;
+  }
+
+  /* paper tone wash + vignette */
+  .wash{
+    position:absolute; inset:0; z-index:3; pointer-events:none;
+    background:
+      linear-gradient(180deg, rgba(190,188,185,.28), rgba(150,148,145,.12) 30%, rgba(70,68,66,.18) 100%),
+      radial-gradient(130% 120% at 50% 38%, transparent 55%, rgba(0,0,0,.34) 100%);
+    mix-blend-mode:multiply;
+  }
+
+  /* focus-window frame + reticle */
+  .frame{
+    position:absolute; z-index:4; pointer-events:none;
+    top:var(--win-top);
+    left:var(--win-left);
+    right:var(--win-right);
+    bottom:var(--win-bottom);
+    border:1px solid rgba(245,245,245,.85);
+    box-shadow:0 0 0 .5px rgba(0,0,0,.25);
+    transition:top .16s ease-out,left .16s ease-out,right .16s ease-out,bottom .16s ease-out;
+  }
+  .reticle{
+    position:absolute; right:14%; top:50%;
+    width:13px; height:13px; transform:translateY(-50%);
+    opacity:.9;
+  }
+  .reticle::before,.reticle::after{
+    content:""; position:absolute; background:#f4f4f4;
+    box-shadow:0 0 2px rgba(0,0,0,.4);
+  }
+  .reticle::before{ left:50%; top:0; width:1px; height:100%; transform:translateX(-50%); }
+  .reticle::after { top:50%; left:0; height:1px; width:100%; transform:translateY(-50%); }
+
+  /* ---- typography ---- */
+  .type{
+    position:absolute; z-index:5; pointer-events:none;
+    left:12.5%; top:46%;
+    display:flex; gap:1.7em;
+    color:#f3f3f3;
+    font-weight:400;
+    font-size:clamp(11px,2.15vmin,18px);
+    line-height:1.14;
+    letter-spacing:-.01em;
+  }
+  .type p{ white-space:nowrap; }
+  .type .muted{ color:#ededed; }
+
+  .stamp{
+    position:absolute; z-index:5; left:0; right:0; bottom:5.2%;
+    text-align:center; pointer-events:none;
+    font-size:clamp(9px,1.5vmin,12px);
+    font-weight:400;
+    letter-spacing:.26em;
+    font-variant-numeric:tabular-nums;
+    color:rgba(235,235,235,.74);
+    padding-left:.28em; /* optical balance for tracking */
+  }
+
+  /* film grain */
+  .grain{
+    position:absolute; inset:-40%; z-index:6; pointer-events:none;
+    background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity:.10; mix-blend-mode:overlay;
+    animation:grain 1.1s steps(4) infinite;
+  }
+  @keyframes grain{
+    0%{transform:translate(0,0)} 25%{transform:translate(-3%,2%)}
+    50%{transform:translate(2%,-3%)} 75%{transform:translate(-2%,-2%)}
+    100%{transform:translate(3%,3%)}
+  }
+
+  @media (prefers-reduced-motion: reduce){ .grain{ animation:none; } }
+</style>
+</head>
+<body>
+  <main class="poster" id="poster" aria-label="open your window, release the impossible">
+    <video class="layer blur" src="assets/motion_loop.mp4"
+           poster="assets/portrait_clean.png"
+           autoplay loop muted playsinline aria-hidden="true"></video>
+    <video class="layer sharp" src="assets/motion_loop.mp4"
+           poster="assets/portrait_clean.png"
+           autoplay loop muted playsinline aria-label="portrait, in focus"></video>
+    <div class="wash"></div>
+    <div class="frame"><span class="reticle"></span></div>
+
+    <div class="type">
+      <p>open<br>your<br>window,</p>
+      <p class="muted">release<br>the<br>impossible</p>
+    </div>
+
+    <div class="stamp" id="stamp">2025-01-03 13:47:32</div>
+    <div class="grain"></div>
+  </main>
+
+<script>
+  // live ticking timestamp — YYYY-MM-DD HH:MM:SS
+  const stamp = document.getElementById('stamp');
+  const pad = n => String(n).padStart(2,'0');
+  function tick(){
+    const d = new Date();
+    stamp.textContent =
+      `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} `+
+      `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  }
+  tick(); setInterval(tick, 1000);
+
+  // the focus window — a sharp "spotlight" — follows the cursor
+  const poster = document.getElementById('poster');
+  const root = document.documentElement;
+  const W = 21, H = 42;                 // window size, % of poster
+  const REST = { cx: 56.5, cy: 57 };    // resting centre (over the face)
+
+  function place(cx, cy){
+    const left = Math.min(100 - W, Math.max(0, cx - W/2));
+    const top  = Math.min(100 - H, Math.max(0, cy - H/2));
+    const s = root.style;
+    s.setProperty('--win-left',   left.toFixed(2)+'%');
+    s.setProperty('--win-right',  (100-left-W).toFixed(2)+'%');
+    s.setProperty('--win-top',    top.toFixed(2)+'%');
+    s.setProperty('--win-bottom', (100-top-H).toFixed(2)+'%');
+  }
+
+  let raf = 0, px = REST.cx, py = REST.cy;
+  poster.addEventListener('pointermove', e=>{
+    const r = poster.getBoundingClientRect();
+    px = (e.clientX - r.left)/r.width  * 100;
+    py = (e.clientY - r.top )/r.height * 100;
+    if(raf) return;
+    raf = requestAnimationFrame(()=>{ raf = 0; place(px, py); });
+  });
+  poster.addEventListener('pointerleave', ()=> place(REST.cx, REST.cy));
+  place(REST.cx, REST.cy);
+</script>
+</body>
+</html>
