@@ -1,5 +1,7 @@
 # ji-blur-site
 
+![ji-blur-site](assets/screenshot.jpg)
+
 An interactive, monochrome poster recreation — *"open your window, release the impossible"* — built from a single still poster.
 
 Open `index.html` (any static server). Move the cursor: a sharp focus window follows it across an otherwise-blurred, quietly-breathing portrait. The timestamp ticks live.
